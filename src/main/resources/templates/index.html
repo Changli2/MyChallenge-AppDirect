@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simple page showing all users</title>
+</head>
+<body>
+	<p>Welcome!</p>
+	<p th:text="${name}">Text</p>
+	<table border="1">
+		<thead>
+			<tr>
+				<th>Email</th>
+
+				<th>First Name</th>
+
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-th-each="user : ${users}">
+				<td th:text="${user.email}">1</td>
+
+				<td th:text="${user.firstName}">Text...</td>
+
+				<td th:text="${user.status}">Text ...</td>
+			</tr>
+		</tbody>
+	</table>
+</body>
+</html>
