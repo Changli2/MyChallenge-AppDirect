@@ -1,12 +1,12 @@
 package webapp.config;
 
 import org.genericdao.ConnectionPool;
-import org.openid4java.consumer.ConsumerManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import webapp.util.ConnectionUtil;
 import webapp.util.OpenidUtil;
 
 @Configuration
@@ -20,14 +20,25 @@ public class DatabaseConfig {
 	private String user;
 	@Value("${pipes.db.password}")
 	private String password;
-
+	
+	/**
+	 * This is to get a connection for DAOs
+	 */
 	@Bean
 	public ConnectionPool connection() {
 		return new ConnectionPool(jdbcDriverName, jdbcURL, user, password);
 	}
 	
+	/**
+	 * Util to use openid
+	 */
 	@Bean 
 	public OpenidUtil openidUtil() {
 		return new OpenidUtil();
+	}
+	
+	@Bean
+	public ConnectionUtil conUtil() {
+		return new ConnectionUtil();
 	}
 }

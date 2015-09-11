@@ -1,7 +1,6 @@
 package webapp.controller;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
@@ -9,8 +8,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
 
 import org.genericdao.RollbackException;
 import org.genericdao.Transaction;
@@ -25,6 +22,7 @@ import webapp.dao.SubscriptionDAO;
 import webapp.dao.UserDAO;
 import webapp.databean.SubscriptionBean;
 import webapp.databean.UserBean;
+import webapp.util.ConnectionUtil;
 import webapp.util.ErrorCodes;
 import webapp.util.ErrorReturnResult;
 import webapp.util.ReturnResult;
@@ -37,6 +35,9 @@ public class UserAssignController {
 
 	@Autowired
 	SubscriptionDAO subDAO;
+	
+	@Autowired
+	ConnectionUtil connectionUtil;
 
 	@RequestMapping("/assign")
 	public @ResponseBody ReturnResult assignUser(
@@ -49,7 +50,7 @@ public class UserAssignController {
 
 		HttpURLConnection connection = null;
 		try {
-			connection = getConnection(url);
+			connection = connectionUtil.getConnection(url);
 		} catch (Exception e) {
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
@@ -134,18 +135,4 @@ public class UserAssignController {
 		return bean;
 	}
 
-	private HttpURLConnection getConnection(String url) throws Exception {
-		OAuthConsumer consumer = new DefaultOAuthConsumer("cl-40027",
-				"6DljzI4YNQxij1Mv");
-		URL returnURL = null;
-		returnURL = new URL(url);
-		HttpURLConnection connection = null;
-		connection = (HttpURLConnection) returnURL.openConnection();
-
-		connection.setRequestMethod("GET");
-
-		consumer.sign(connection);
-		connection.connect();
-		return connection;
-	}
 }

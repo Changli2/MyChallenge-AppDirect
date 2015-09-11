@@ -1,7 +1,6 @@
 package webapp.controller;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
@@ -9,8 +8,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
 
 import org.genericdao.RollbackException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +23,7 @@ import webapp.dao.SubscriptionDAO;
 import webapp.dao.UserDAO;
 import webapp.databean.SubscriptionBean;
 import webapp.databean.UserBean;
+import webapp.util.ConnectionUtil;
 import webapp.util.ErrorCodes;
 import webapp.util.ErrorReturnResult;
 import webapp.util.ReturnResult;
@@ -38,21 +36,28 @@ public class SubscriptionController {
 
 	@Autowired
 	SubscriptionDAO subDAO;
-
+	
+	@Autowired
+	ConnectionUtil connectionUtil;
+	
+	/**
+	 * Handle subscription create
+	 */
 	@RequestMapping("/create")
 	public @ResponseBody ReturnResult subcription(
 			@RequestParam(value = "url", required = false) String url,
 			HttpServletRequest request) {
 
-		System.out.println("in create, url: " + url);
 		// two types of result, one of them would be returned later
 		SuccessReturnResult res = new SuccessReturnResult();
 		ErrorReturnResult errorRes = new ErrorReturnResult();
 
 		HttpURLConnection connection = null;
 		try {
-			connection = getConnection(url);
+			// get connection
+			connection = connectionUtil.getConnection(url);
 		} catch (Exception e) {
+			// url not accessible
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
 			return errorRes;
@@ -60,16 +65,21 @@ public class SubscriptionController {
 
 		SubscriptionBean newSubscription = null;
 		try {
+			// extract info from xml
 			newSubscription = readSubscription(connection);
 		} catch (Exception e) {
+			// xml is not valid
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
 			return errorRes;
 		}
-
+		
+		// when a subscription is created, set the user as one
 		newSubscription.setCurUser(1);
 		newSubscription.setStatus("Active");
-
+		
+		// if is invalid state if there existing such subscription 
+		// idenfified by the creator openid
 		SubscriptionBean checkPreviousExistBean = subDAO
 				.getSubByOpenId(newSubscription.getOpenid());
 		if (checkPreviousExistBean != null) {
@@ -112,7 +122,11 @@ public class SubscriptionController {
 		userBean.setOpenid(subBean.getOpenid());
 		return userBean;
 	}
-
+	
+	/**
+	 * Extract info and put in a bean,
+	 * for current subscription case
+	 */
 	private SubscriptionBean readSubscription(HttpURLConnection connection)
 			throws Exception {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -181,21 +195,6 @@ public class SubscriptionController {
 		}
 
 		return bean;
-	}
-
-	private HttpURLConnection getConnection(String url) throws Exception {
-		OAuthConsumer consumer = new DefaultOAuthConsumer("cl-40027",
-				"6DljzI4YNQxij1Mv");
-		URL returnURL = null;
-		returnURL = new URL(url);
-		HttpURLConnection connection = null;
-		connection = (HttpURLConnection) returnURL.openConnection();
-
-		connection.setRequestMethod("GET");
-
-		consumer.sign(connection);
-		connection.connect();
-		return connection;
 	}
 
 }

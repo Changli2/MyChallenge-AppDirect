@@ -24,6 +24,10 @@ import org.openid4java.message.ax.FetchRequest;
 import org.openid4java.message.ax.FetchResponse;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * I took this from the web
+ * https://code.google.com/p/openid4java/wiki/QuickStart
+ */
 public class OpenidUtil {
 	public ConsumerManager manager;
 	
@@ -98,16 +102,16 @@ public class OpenidUtil {
 
             // extract the receiving URL from the HTTP request
             StringBuffer receivingURL = httpReq.getRequestURL();
-//            try {
-//				URL urlReceived = new URL(receivingURL.toString());
-//				if (urlReceived.getPort() == -1) {
-//					urlReceived = new URL(urlReceived.getProtocol(), urlReceived.getHost(), 80, urlReceived.getFile());
-//					receivingURL = new StringBuffer(urlReceived.toString());
-//				}
-//			} catch (MalformedURLException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+            try {
+				URL urlReceived = new URL(receivingURL.toString());
+				if (urlReceived.getPort() == -1) {
+					urlReceived = new URL(urlReceived.getProtocol(), urlReceived.getHost(), 80, urlReceived.getFile());
+					receivingURL = new StringBuffer(urlReceived.toString());
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             System.out.println("get receiving URL: " + receivingURL);
             
             String queryString = httpReq.getQueryString();

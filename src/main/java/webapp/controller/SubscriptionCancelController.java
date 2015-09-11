@@ -1,7 +1,6 @@
 package webapp.controller;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
@@ -9,8 +8,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
 
 import org.genericdao.RollbackException;
 import org.genericdao.Transaction;
@@ -25,6 +22,7 @@ import webapp.dao.SubscriptionDAO;
 import webapp.dao.UserDAO;
 import webapp.databean.SubscriptionBean;
 import webapp.databean.UserBean;
+import webapp.util.ConnectionUtil;
 import webapp.util.ErrorCodes;
 import webapp.util.ErrorReturnResult;
 import webapp.util.ReturnResult;
@@ -37,7 +35,13 @@ public class SubscriptionCancelController {
 
 	@Autowired
 	SubscriptionDAO subDAO;
+	
+	@Autowired
+	ConnectionUtil connectionUtil;
 
+	/**
+	 * Handle subscription cancel
+	 */
 	@RequestMapping("/cancel")
 	public @ResponseBody ReturnResult cancellSubcription(
 			@RequestParam(value = "url", required = false) String url,
@@ -48,8 +52,10 @@ public class SubscriptionCancelController {
 
 		HttpURLConnection connection = null;
 		try {
-			connection = getConnection(url);
+			// get connection
+			connection = connectionUtil.getConnection(url);
 		} catch (Exception e) {
+			// url not accessible
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
 			return errorRes;
@@ -65,6 +71,7 @@ public class SubscriptionCancelController {
 		}
 
 		try {
+			// delete the data record in database
 			deleteRecordsByIdentifier(updatedSubscription.getIdentifier());
 		} catch (RollbackException e1) {
 			errorRes.setSuccess("false");
@@ -76,7 +83,11 @@ public class SubscriptionCancelController {
 		res.setMessage("account deleted successfully");
 		return res;
 	}
-
+	
+	/**
+	 * Extract info and put in a bean,
+	 * for current subscription case
+	 */
 	private SubscriptionBean readSubscription(HttpURLConnection connection)
 			throws Exception {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -120,20 +131,6 @@ public class SubscriptionCancelController {
 		return bean;
 	}
 
-	private HttpURLConnection getConnection(String url) throws Exception {
-		OAuthConsumer consumer = new DefaultOAuthConsumer("cl-40027",
-				"6DljzI4YNQxij1Mv");
-		URL returnURL = null;
-		returnURL = new URL(url);
-		HttpURLConnection connection = null;
-		connection = (HttpURLConnection) returnURL.openConnection();
-
-		connection.setRequestMethod("GET");
-
-		consumer.sign(connection);
-		connection.connect();
-		return connection;
-	}
 
 	private void deleteRecordsByIdentifier(int identifier)
 			throws RollbackException {

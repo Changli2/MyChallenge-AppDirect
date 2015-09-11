@@ -1,16 +1,12 @@
 package webapp.controller;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
 
 import org.genericdao.RollbackException;
 import org.genericdao.Transaction;
@@ -26,6 +22,7 @@ import webapp.dao.UserDAO;
 import webapp.databean.NoticeDataBean;
 import webapp.databean.SubscriptionBean;
 import webapp.databean.UserBean;
+import webapp.util.ConnectionUtil;
 import webapp.util.ErrorCodes;
 import webapp.util.ErrorReturnResult;
 import webapp.util.ReturnResult;
@@ -38,7 +35,13 @@ public class SubscriptionNotceController {
 
 	@Autowired
 	SubscriptionDAO subDAO;
+	
+	@Autowired
+	ConnectionUtil connectionUtil;
 
+	/**
+	 * Handle subscription status
+	 */
 	@RequestMapping("/status")
 	public @ResponseBody ReturnResult noticeSubcription(
 			@RequestParam(value = "url", required = false) String url,
@@ -49,8 +52,10 @@ public class SubscriptionNotceController {
 
 		HttpURLConnection connection = null;
 		try {
-			connection = getConnection(url);
+			// get connection
+			connection = connectionUtil.getConnection(url);
 		} catch (Exception e) {
+			// url not accessible
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
 			return errorRes;
@@ -58,8 +63,10 @@ public class SubscriptionNotceController {
 
 		NoticeDataBean noticeBean = null;
 		try {
+			// extract info from xml
 			noticeBean = readSubscriptionNotice(connection);
 		} catch (Exception e) {
+			// xml is not valid
 			errorRes.setSuccess("false");
 			errorRes.setErrorCode(ErrorCodes.INVALID_RESPONSE);
 			return errorRes;
@@ -101,22 +108,11 @@ public class SubscriptionNotceController {
 		res.setMessage("account updated successfully");
 		return res;
 	}
-
-	private HttpURLConnection getConnection(String url) throws Exception {
-		OAuthConsumer consumer = new DefaultOAuthConsumer("cl-40027",
-				"6DljzI4YNQxij1Mv");
-		URL returnURL = null;
-		returnURL = new URL(url);
-		HttpURLConnection connection = null;
-		connection = (HttpURLConnection) returnURL.openConnection();
-
-		connection.setRequestMethod("GET");
-
-		consumer.sign(connection);
-		connection.connect();
-		return connection;
-	}
-
+	
+	/**
+	 * Extract info and put in a bean,
+	 * for current subscription case
+	 */
 	private NoticeDataBean readSubscriptionNotice(HttpURLConnection connection)
 			throws Exception {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

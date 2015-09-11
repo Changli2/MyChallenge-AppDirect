@@ -73,6 +73,9 @@ public class AppPageController {
 		return result;
 	}
 
+	/**
+	 * The login url set in the app setting
+	 */
 	@RequestMapping("/login")
 	public void login(@RequestParam(value = "openid", required = false) String openid,
 			HttpServletRequest request, HttpServletResponse response) {
@@ -80,6 +83,9 @@ public class AppPageController {
 		openidUtil.authRequest(openid, request, response);
 	}
 	
+	/**
+	 * Callback handler for openid
+	 */
 	@RequestMapping("/login/openid")
 	public String openidCallback(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 		Identifier identity = openidUtil.verifyResponse(httpRequest);
